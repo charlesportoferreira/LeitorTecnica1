@@ -13,14 +13,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 
 public class LeitorTecnica1 {
 
     public List<String> filePaths = new ArrayList<>();
+    public Map<String, Integer> mapaStopList = new HashMap();
 
     public static void main(String[] args) {
         List<StringBuilder> geracoes = new ArrayList<>();
@@ -37,7 +39,7 @@ public class LeitorTecnica1 {
         }
 
         int index;
-        lt1.deletaArquivoExistente("tec1");
+        lt1.deletaArquivoExistente("tec1.csv");
         for (StringBuilder sb : geracoes) {
             index = sb.lastIndexOf(",");
             sb.replace(index, index + 1, "\n");
@@ -46,6 +48,17 @@ public class LeitorTecnica1 {
             } catch (IOException ex) {
                 Logger.getLogger(LeitorTecnica1.class.getName()).log(Level.SEVERE, null, ex);
             }
+        }
+
+        StringBuilder sbStoplist = new StringBuilder();
+        for (Map.Entry<String, Integer> entrySet : lt1.mapaStopList.entrySet()) {
+            sbStoplist.append(entrySet.getKey()).append(",").append(entrySet.getValue()).append("\n");
+        }
+        lt1.deletaArquivoExistente("stoplistsTec1.csv");
+        try {
+            lt1.imprimeArquivo("stoplistsTec1.csv", sbStoplist.toString());
+        } catch (IOException ex) {
+            Logger.getLogger(LeitorTecnica1.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -61,6 +74,7 @@ public class LeitorTecnica1 {
                     numGeracao++;
                     atualizaListaGeracoes(listaGeracoes, numGeracao, br);
                 }
+                
             }
             br.close();
             fr.close();
@@ -76,6 +90,10 @@ public class LeitorTecnica1 {
             listaGeracoes.add(sb);
         }
         String linhaLida = br.readLine();
+        if (numGeracao == 499) {
+                    String[] dados = linhaLida.split("-");
+                    atualizaMapaStoplists(dados[6]);
+                }
         linhaLida = formataStringDados(linhaLida);
         sb.append(linhaLida).append(",");
     }
@@ -87,8 +105,23 @@ public class LeitorTecnica1 {
         return linhaLida;
     }
 
+    private void atualizaMapaStoplists(String dado) {
+        System.out.println(dado);
+        String[] stoplists = dado.replace(" st:", "").split(",");
+        int count = 0;
+        for (String stoplist : stoplists) {
+            if (mapaStopList.containsKey(stoplist)) {
+                count = mapaStopList.get(stoplist);
+                count++;
+                mapaStopList.put(stoplist, count);
+            } else {
+                mapaStopList.put(stoplist, 1);
+            }
+        }
+    }
+
     private void deletaArquivoExistente(String newFile) {
-        File arquivo = new File(newFile + ".csv");
+        File arquivo = new File(newFile);
         if (arquivo.exists()) {
             arquivo.delete();
         }
